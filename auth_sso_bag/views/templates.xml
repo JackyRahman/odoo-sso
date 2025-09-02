@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="sso_login_assets" inherit_id="web.login" name="SSO Login Button">
+    <xpath expr="//form[hasclass('oe_login_form')]" position="inside">
+      <t t-if="request.env['ir.config_parameter'].sudo().get_param('auth_sso_bag.show_button')">
+        <a class="btn btn-primary mt-2" t-att-href="'/auth/sso/login'">
+          Login dengan SSO
+        </a>
+      </t>
+    </xpath>
+  </template>
+</odoo>

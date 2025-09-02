@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <record id="param_base_url" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.base_url</field>
+    <field name="value">https://dev-ssobag.air.id</field>
+  </record>
+  <record id="param_auth_ep" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.auth_endpoint</field>
+    <field name="value">/svc-sso/oauth2/auth</field>
+  </record>
+  <record id="param_token_ep" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.token_endpoint</field>
+    <field name="value">/svc-sso/oauth2/token</field>
+  </record>
+  <record id="param_me_ep" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.me_endpoint</field>
+    <field name="value">/svc-sso/oauth2/me</field>
+  </record>
+  <record id="param_logout_ep" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.logout_endpoint</field>
+    <field name="value">/svc-sso/oauth2/logout</field>
+  </record>
+  <record id="param_scopes" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.scopes</field>
+    <field name="value">openid profile personal empinfo email address phone</field>
+  </record>
+</odoo>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Inject panel konfigurasi SSO (BAG) ke halaman Settings (Odoo 16) -->
+  <record id="res_config_settings_view_form_sso_bag" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.sso.bag</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+
+      <!-- Tempelkan ke container utama settings -->
+      <xpath expr="//div[contains(@class,'settings')]" position="inside">
+
+        <!-- Penting: gunakan data-string, JANGAN pakai attribute string -->
+        <div class="app_settings_block" data-string="SSO (BAG)">
+          <h2>SSO (BAG)</h2>
+
+          <div class="row mt16 o_settings_container">
+            <div class="col-12 col-lg-6">
+
+              <!-- Tampilkan tombol SSO di halaman login -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="show_sso_login_button"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="show_sso_login_button"/>
+                  <div class="text-muted">Show "Login dengan SSO" di halaman login.</div>
+                </div>
+              </div>
+
+              <!-- Base URL -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_base_url"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_base_url"/>
+                  <div class="text-muted">Contoh: https://dev-ssobag.air.id</div>
+                </div>
+              </div>
+
+              <!-- Authorize endpoint -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_auth_endpoint"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_auth_endpoint"/>
+                  <div class="text-muted">/svc-sso/oauth2/auth</div>
+                </div>
+              </div>
+
+              <!-- Token endpoint -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_token_endpoint"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_token_endpoint"/>
+                  <div class="text-muted">/svc-sso/oauth2/token</div>
+                </div>
+              </div>
+
+              <!-- Me endpoint -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_me_endpoint"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_me_endpoint"/>
+                  <div class="text-muted">/svc-sso/oauth2/me</div>
+                </div>
+              </div>
+
+              <!-- Logout endpoint -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_logout_endpoint"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_logout_endpoint"/>
+                  <div class="text-muted">/svc-sso/oauth2/logout</div>
+                </div>
+              </div>
+
+              <!-- Client ID -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_client_id"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_client_id"/>
+                </div>
+              </div>
+
+              <!-- Client Secret -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_client_secret" password="True"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_client_secret"/>
+                </div>
+              </div>
+
+              <!-- Scopes -->
+              <div class="o_setting_box">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_scopes"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_scopes"/>
+                  <div class="text-muted">openid profile personal empinfo email address phone</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Fallback: jika tema/edisi tidak punya .settings, tempel ke .o_settings_container -->
+  <record id="res_config_settings_view_form_sso_bag_fallback" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.sso.bag.fallback</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="priority" eval="5"/>
+    <field name="arch" type="xml">
+      <xpath expr="//div[contains(@class,'o_settings_container')]" position="inside">
+        <div class="app_settings_block" data-string="SSO (BAG)">
+          <h2>SSO (BAG)</h2>
+          <div class="row mt16">
+            <div class="col-12 col-lg-6">
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="show_sso_login_button"/></div>
+                <div class="o_setting_right"><label for="show_sso_login_button"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_base_url"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_base_url"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_auth_endpoint"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_auth_endpoint"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_token_endpoint"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_token_endpoint"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_me_endpoint"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_me_endpoint"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_logout_endpoint"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_logout_endpoint"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_client_id"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_client_id"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_client_secret" password="True"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_client_secret"/></div>
+              </div>
+              <div class="o_setting_box">
+                <div class="o_setting_left"><field name="auth_sso_bag_scopes"/></div>
+                <div class="o_setting_right"><label for="auth_sso_bag_scopes"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
+</odoo>
