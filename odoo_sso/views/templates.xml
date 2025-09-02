@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="sso_login_button" inherit_id="web.login">
+        <xpath expr="//div[@class='oe_login_buttons']" position="inside">
+            <a type="button" class="btn btn-primary mt-2" t-attf-href="/sso/login">Login with SSO</a>
+        </xpath>
+    </template>
+</odoo>
