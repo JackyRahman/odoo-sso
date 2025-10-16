@@ -20,6 +20,10 @@
     <field name="key">auth_sso_bag.logout_endpoint</field>
     <field name="value">/svc-sso/oauth2/logout</field>
   </record>
+  <record id="param_logout_redirect_target" model="ir.config_parameter">
+    <field name="key">auth_sso_bag.redirect_target</field>
+    <field name="value">/web/login</field>
+  </record>
   <record id="param_scopes" model="ir.config_parameter">
     <field name="key">auth_sso_bag.scopes</field>
     <field name="value">openid profile personal empinfo email address phone</field>

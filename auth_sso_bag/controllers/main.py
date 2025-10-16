@@ -13,21 +13,42 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from odoo import http, _
 from odoo.http import request
-from werkzeug.utils import redirect
+from werkzeug.utils import redirect as werkzeug_redirect
 from odoo.service import security
+from odoo.addons.web.controllers.home import Home as WebHome
 
 _logger = logging.getLogger(__name__)
 
-class SSOController(http.Controller):
 
+class SSOMixin:
     def _get_param(self, key, default=""):
-        ICP = request.env["ir.config_parameter"].sudo()
-        return ICP.get_param(key, default) or default
+        return request.env["ir.config_parameter"].sudo().get_param(key, default) or default
 
-    def _build_redirect_uri(self):
-        
-        host_url = request.httprequest.host_url  # scheme+host+/
-        return urllib.parse.urljoin(host_url, "auth/sso/callback")
+    def _build_logout_redirect_uri(self):
+        """
+        Buat URL ke endpoint logout SSO, sertakan post_logout_redirect_uri
+        yg menunjuk balik ke Odoo (default: /web/login).
+        """
+        base = self._get_param("auth_sso_bag.base_url", "https://dev-ssobag.air.id").rstrip("/")
+        logout_ep = "/" + self._get_param("auth_sso_bag.logout_endpoint", "/svc-sso/oauth2/logout").lstrip("/")
+
+        redirect_target = (self._get_param("auth_sso_bag.redirect_target") or "").strip()
+        if not redirect_target:
+            redirect_target = urllib.parse.urljoin(request.httprequest.host_url, "web/login")
+        elif redirect_target.startswith("/"):
+            redirect_target = urllib.parse.urljoin(request.httprequest.host_url, redirect_target.lstrip("/"))
+
+        params = {"post_logout_redirect_uri": redirect_target}
+        return f"{base}{logout_ep}?{urllib.parse.urlencode(params)}"
+
+    def _clear_all_cookies(self, response):
+        to_clear = {"session_id", "tz", "fileToken", "frontend_lang", "oauth_state"}
+        for name in set(to_clear) | set(request.httprequest.cookies.keys()):
+            response.delete_cookie(name, path="/")
+        return response
+
+
+class SSOController(SSOMixin, http.Controller):
 
     @http.route("/auth/sso/login", type="http", auth="public", website=True, csrf=False)
     def sso_login(self, **kw):
@@ -37,12 +58,10 @@ class SSOController(http.Controller):
         scopes = self._get_param("auth_sso_bag.scopes", "openid profile personal empinfo email address phone")
 
         if not client_id:
-            # render login dengan error kalau belum dikonfigurasi
             return request.render("web.login", {"error": _("SSO is not configured. Contact administrator.")})
 
         state = secrets.token_urlsafe(24)
 
-        # Build URL authorize
         params = {
             "response_type": "code",
             "client_id": client_id,
@@ -53,8 +72,7 @@ class SSOController(http.Controller):
         url = f"{base}{auth_ep}?{urllib.parse.urlencode(params)}"
         _logger.info("[SSO] redirect to %s", url)
 
-        # Buat response redirect, lalu set cookie state di response tsb
-        resp = redirect(url)
+        resp = werkzeug_redirect(url)
         resp.set_cookie(
             "oauth_state",
             state,
@@ -75,10 +93,10 @@ class SSOController(http.Controller):
                      len(code) if code else None, state, cookie_state)
 
         if not code:
-            return redirect("/web/login?error=missing_code")
+            return werkzeug_redirect("/web/login?error=missing_code")
 
         if not cookie_state or cookie_state != state:
-            return redirect("/web/login?error=invalid_state")
+            return werkzeug_redirect("/web/login?error=invalid_state")
 
         base = self._get_param("auth_sso_bag.base_url", "https://dev-ssobag.air.id").rstrip("/")
         token_ep = self._get_param("auth_sso_bag.token_endpoint", "/svc-sso/oauth2/token")
@@ -88,9 +106,8 @@ class SSOController(http.Controller):
         redirect_uri = self._build_redirect_uri()
 
         if not (client_id and client_secret):
-            return redirect("/web/login?error=missing_client")
+            return werkzeug_redirect("/web/login?error=missing_client")
 
-        # tukar code -> token (Basic Auth)
         token_url = f"{base}{token_ep}"
         data = {
             "grant_type": "authorization_code",
@@ -105,8 +122,7 @@ class SSOController(http.Controller):
         resp = requests.post(token_url, data=data, headers=headers, timeout=20)
         if resp.status_code // 100 != 2:
             _logger.error("[SSO] token exchange failed: %s %s", resp.status_code, resp.text)
-            # hapus cookie state via response redirect
-            r = redirect("/web/login?error=exchange_failed")
+            r = werkzeug_redirect("/web/login?error=exchange_failed")
             r.delete_cookie("oauth_state", path="/")
             return r
 
@@ -115,12 +131,11 @@ class SSOController(http.Controller):
         refresh_token = tr.get("refresh_token")
         expires_in = tr.get("expires_in", 3600)
 
-        # panggil /me
         me_url = f"{base}{me_ep}"
         m = requests.get(me_url, headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"}, timeout=20)
         if m.status_code // 100 != 2:
             _logger.error("[SSO] /me failed: %s %s", m.status_code, m.text)
-            r = redirect("/web/login?error=me_failed")
+            r = werkzeug_redirect("/web/login?error=me_failed")
             r.delete_cookie("oauth_state", path="/")
             return r
 
@@ -175,21 +190,18 @@ class SSOController(http.Controller):
                 "expires_at": expiry,
             })
 
-        # login Odoo (set session)
         request.session.uid = user.id
 
-        # penting: set session_token & rotate session
         request.session.session_token = security.compute_session_token(request.session, request.env)
-        request.session.rotate = True   # ganti session_id biar aman setelah auth
+        request.session.rotate = True
         request.session.context = dict(request.session.context or {}, lang=user.lang or 'en_US')
-        request.session.login = user.login  # optional, biar konsisten dengan web login
+        request.session.login = user.login
 
         request.env.cr.commit()
         _logger.info("[SSO] login success user_id=%s email=%s", user.id, user.email)
 
-        # hapus cookie state pada response redirect terakhir
         next_url = kw.get("next") or "/web"
-        final_resp = redirect(next_url)
+        final_resp = werkzeug_redirect(next_url)
         final_resp.delete_cookie("oauth_state", path="/")
         return final_resp
     def _decrypt_password_hash(self, encrypted_hash):
@@ -218,7 +230,7 @@ class SSOController(http.Controller):
             try:
                 key_bytes = base64.b64decode(private_key_pem)
                 private_key = serialization.load_der_private_key(key_bytes, password=None)
-            except Exception as exc:  # pragma: no cover - defensive fallback
+            except Exception as exc:
                 _logger.error("[SSO] invalid RSA private key: %s", exc)
                 return encrypted_hash
 
@@ -233,7 +245,7 @@ class SSOController(http.Controller):
                 encrypted_bytes,
                 padding.PKCS1v15(),
             )
-        except Exception as exc:  # pragma: no cover - cryptography specific
+        except Exception as exc:
             _logger.error("[SSO] failed to decrypt password_sso: %s", exc)
             return encrypted_hash
 
@@ -241,3 +253,32 @@ class SSOController(http.Controller):
             return decrypted_bytes.decode()
         except UnicodeDecodeError:
             return decrypted_bytes.decode("utf-8", errors="ignore")
+
+
+class SSOWebHome(WebHome, SSOMixin):
+    """Override logout supaya selalu lewat SSO."""
+
+    @http.route("/web/logout", type="http", auth="public", csrf=False)
+    def web_logout(self, redirect_url="/web"):
+        request.session.logout(keep_db=True)
+
+        request.session.session_token = security.compute_session_token(request.session, request.env)
+        request.session.rotate = True
+
+        resp = werkzeug_redirect(self._build_logout_redirect_uri())
+        return self._clear_all_cookies(resp)
+
+    @http.route("/web/session/logout", type="json", auth="user")
+    def web_session_logout(self):
+        """
+        Dipanggil oleh webclient via JSON-RPC.
+        Kita kembalikan JSON {logout: True, redirect_url: <SSO logout>}.
+        Webclient akan melakukan redirect ke URL tsb.
+        """
+        request.session.logout(keep_db=True)
+        payload = {
+            "logout": True,
+            "redirect_url": self._build_logout_redirect_uri(),
+        }
+        resp = request.make_json_response(payload)
+        return self._clear_all_cookies(resp)

@@ -75,6 +75,15 @@
                 </div>
               </div>
 
+               <!-- Logout Redirect Target -->
+              <div class="o_setting_box" data-key="auth_sso_bag_redirect_target">
+                <div class="o_setting_left"><field name="auth_sso_bag_redirect_target"/></div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_redirect_target"/>
+                  <div class="text-muted">Example: /web/login or https://app.example.com/web/login</div>
+                </div>
+              </div>
+              
               <!-- Client ID -->
               <div class="o_setting_box" data-key="auth_sso_bag_client_id">
                 <div class="o_setting_left"><field name="auth_sso_bag_client_id"/></div>
