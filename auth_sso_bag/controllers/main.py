@@ -40,7 +40,18 @@ class SSOMixin:
 
         params = {"post_logout_redirect_uri": redirect_target}
         return f"{base}{logout_ep}?{urllib.parse.urlencode(params)}"
+    
+    def _build_redirect_uri(self):
+        """Bangun redirect_uri absolut untuk callback Odoo."""
 
+        configured = (self._get_param("auth_sso_bag.redirect_uri") or "").strip()
+        if configured:
+            if configured.startswith("/"):
+                return urllib.parse.urljoin(request.httprequest.host_url, configured.lstrip("/"))
+            return configured
+
+        return urllib.parse.urljoin(request.httprequest.host_url, "auth/sso/callback")
+    
     def _clear_all_cookies(self, response):
         to_clear = {"session_id", "tz", "fileToken", "frontend_lang", "oauth_state"}
         for name in set(to_clear) | set(request.httprequest.cookies.keys()):

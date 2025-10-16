@@ -9,6 +9,11 @@ class ResConfigSettings(models.TransientModel):
     auth_sso_bag_token_endpoint = fields.Char(string="Token Endpoint", config_parameter="auth_sso_bag.token_endpoint", default="/svc-sso/oauth2/token")
     auth_sso_bag_me_endpoint = fields.Char(string="UserInfo (/me) Endpoint", config_parameter="auth_sso_bag.me_endpoint", default="/svc-sso/oauth2/me")
     auth_sso_bag_logout_endpoint = fields.Char(string="Logout Endpoint", config_parameter="auth_sso_bag.logout_endpoint", default="/svc-sso/oauth2/logout")
+    auth_sso_bag_redirect_uri = fields.Char(
+        string="Redirect URI Override",
+        config_parameter="auth_sso_bag.redirect_uri",
+        help="Optional absolute URL used as redirect_uri during OAuth flow. Leave empty to use this Odoo instance's callback URL.",
+    )
     auth_sso_bag_redirect_target = fields.Char(
         string="Logout Redirect Target",
         config_parameter="auth_sso_bag.redirect_target",
