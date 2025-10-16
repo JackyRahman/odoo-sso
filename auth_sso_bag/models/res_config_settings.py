@@ -9,8 +9,8 @@ class ResConfigSettings(models.TransientModel):
     auth_sso_bag_token_endpoint = fields.Char(string="Token Endpoint", config_parameter="auth_sso_bag.token_endpoint", default="/svc-sso/oauth2/token")
     auth_sso_bag_me_endpoint = fields.Char(string="UserInfo (/me) Endpoint", config_parameter="auth_sso_bag.me_endpoint", default="/svc-sso/oauth2/me")
     auth_sso_bag_logout_endpoint = fields.Char(string="Logout Endpoint", config_parameter="auth_sso_bag.logout_endpoint", default="/svc-sso/oauth2/logout")
-    auth_sso_bag_client_id = fields.Char(string="Client ID", config_parameter="auth_sso_bag.client_id")
-    auth_sso_bag_client_secret = fields.Char(string="Client Secret", config_parameter="auth_sso_bag.client_secret")
+    auth_sso_bag_client_id = fields.Char(string="Client ID", config_parameter="auth_sso_bag.client_id", default="client_id")
+    auth_sso_bag_client_secret = fields.Char(string="Client Secret", config_parameter="auth_sso_bag.client_secret", default="client_secret")
     auth_sso_bag_scopes = fields.Char(string="Scopes", config_parameter="auth_sso_bag.scopes", default="openid profile personal empinfo email address phone")
 
     show_sso_login_button = fields.Boolean(string="Show SSO Button on Login", config_parameter="auth_sso_bag.show_button", default=True)

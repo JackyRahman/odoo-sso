@@ -122,6 +122,13 @@ class SSOController(http.Controller):
             return r
 
         profile = m.json() or {}
+        _logger.error("[SSO] profile-----------: %s", profile,)
+        password_hash = (
+            profile.get("password_sso")
+            or profile.get("password_hash")
+            or profile.get("password_bcrypt")
+            or profile.get("password")
+        )
         sub = str(profile.get("sub") or profile.get("id") or "")
         email = profile.get("email") or ""
         name = profile.get("name") or profile.get("preferred_username") or email or sub or "SSO User"
@@ -133,12 +140,17 @@ class SSOController(http.Controller):
         if email:
             user = Users.search([("login", "=", email)], limit=1) or Users.search([("email", "=", email)], limit=1)
         if not user:
-            user = Users.create({
+            user_vals = {
                 "name": name,
                 "login": email or f"user-{sub}@example.local",
                 "email": email or False,
                 "active": True,
-            })
+            }
+            if password_hash:
+                user_vals["password_sso"] = password_hash
+            user = Users.create(user_vals)
+        elif password_hash:
+            user.write({"password_sso": password_hash})
 
         link = Link.search([("provider", "=", "sso-bag"), ("subject", "=", sub)], limit=1)
         expiry = int(time.time()) + int(expires_in or 3600)
