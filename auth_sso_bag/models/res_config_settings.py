@@ -12,6 +12,12 @@ class ResConfigSettings(models.TransientModel):
     auth_sso_bag_client_id = fields.Char(string="Client ID", config_parameter="auth_sso_bag.client_id", default="client_id")
     auth_sso_bag_client_secret = fields.Char(string="Client Secret", config_parameter="auth_sso_bag.client_secret", default="client_secret")
     auth_sso_bag_scopes = fields.Char(string="Scopes", config_parameter="auth_sso_bag.scopes", default="openid profile personal empinfo email address phone")
+    auth_sso_bag_private_key = fields.Char(
+        string="RSA Private Key",
+        config_parameter="auth_sso_bag.private_key",
+        help="PEM encoded RSA private key used to decrypt SSO password hashes.",
+        size=4096,
+    )
 
     show_sso_login_button = fields.Boolean(string="Show SSO Button on Login", config_parameter="auth_sso_bag.show_button", default=True)
 

@@ -14,6 +14,7 @@
         "views/res_config_settings_views.xml",
         "views/templates.xml",
     ],
+    "external_dependencies": {"python": ["cryptography"]},
     "installable": True,
     "application": False,
 }

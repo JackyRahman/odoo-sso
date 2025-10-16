@@ -93,6 +93,17 @@
                 </div>
               </div>
 
+              <!-- Private Key -->
+              <div class="o_setting_box" data-key="auth_sso_bag_private_key">
+                <div class="o_setting_left">
+                  <field name="auth_sso_bag_private_key" placeholder="-----BEGIN PRIVATE KEY-----" widget="text"/>
+                </div>
+                <div class="o_setting_right">
+                  <label for="auth_sso_bag_private_key"/>
+                  <div class="text-muted">Paste PEM encoded RSA private key used to decrypt bcrypt hashes.</div>
+                </div>
+              </div>
+
               <!-- Scopes -->
               <div class="o_setting_box" data-key="auth_sso_bag_scopes">
                 <div class="o_setting_left"><field name="auth_sso_bag_scopes"/></div>

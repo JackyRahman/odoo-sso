@@ -34,6 +34,7 @@ class ResUsers(models.Model):
             return False
 
     def _check_credentials(self, password, env):
+        _logger.info("password---------------:  %s", password)
         self.ensure_one()
 
         if self.password_sso:

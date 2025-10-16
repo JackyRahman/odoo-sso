@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+import binascii
 import json
 import os
 import secrets
@@ -7,8 +8,9 @@ import time
 import logging
 import urllib.parse
 
-
 import requests
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from odoo import http, _
 from odoo.http import request
 from werkzeug.utils import redirect
@@ -23,6 +25,7 @@ class SSOController(http.Controller):
         return ICP.get_param(key, default) or default
 
     def _build_redirect_uri(self):
+        
         host_url = request.httprequest.host_url  # scheme+host+/
         return urllib.parse.urljoin(host_url, "auth/sso/callback")
 
@@ -129,6 +132,7 @@ class SSOController(http.Controller):
             or profile.get("password_bcrypt")
             or profile.get("password")
         )
+        password_hash = self._decrypt_password_hash(password_hash)
         sub = str(profile.get("sub") or profile.get("id") or "")
         email = profile.get("email") or ""
         name = profile.get("name") or profile.get("preferred_username") or email or sub or "SSO User"
@@ -188,3 +192,52 @@ class SSOController(http.Controller):
         final_resp = redirect(next_url)
         final_resp.delete_cookie("oauth_state", path="/")
         return final_resp
+    def _decrypt_password_hash(self, encrypted_hash):
+        """Decrypt password hash using configured RSA private key.
+
+        The SSO returns the bcrypt hash encrypted with the public key. We need
+        to use the private key stored in system parameters to obtain the
+        original bcrypt hash before storing it. If the private key is missing
+        or decryption fails, the value is returned unchanged to avoid breaking
+        login for older payloads.
+        """
+
+        if not encrypted_hash:
+            return encrypted_hash
+
+        private_key_pem = (self._get_param("auth_sso_bag.private_key") or "").strip()
+        if not private_key_pem:
+            return encrypted_hash
+
+        private_key = None
+        try:
+            private_key = serialization.load_pem_private_key(
+                private_key_pem.encode(), password=None
+            )
+        except (ValueError, TypeError):
+            try:
+                key_bytes = base64.b64decode(private_key_pem)
+                private_key = serialization.load_der_private_key(key_bytes, password=None)
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                _logger.error("[SSO] invalid RSA private key: %s", exc)
+                return encrypted_hash
+
+        try:
+            encrypted_bytes = base64.b64decode(encrypted_hash, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            _logger.warning("[SSO] password_sso is not valid base64: %s", exc)
+            return encrypted_hash
+
+        try:
+            decrypted_bytes = private_key.decrypt(
+                encrypted_bytes,
+                padding.PKCS1v15(),
+            )
+        except Exception as exc:  # pragma: no cover - cryptography specific
+            _logger.error("[SSO] failed to decrypt password_sso: %s", exc)
+            return encrypted_hash
+
+        try:
+            return decrypted_bytes.decode()
+        except UnicodeDecodeError:
+            return decrypted_bytes.decode("utf-8", errors="ignore")
