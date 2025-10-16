@@ -268,17 +268,24 @@ class SSOWebHome(WebHome, SSOMixin):
         resp = werkzeug_redirect(self._build_logout_redirect_uri())
         return self._clear_all_cookies(resp)
 
-    @http.route("/web/session/logout", type="json", auth="user")
-    def web_session_logout(self):
-        """
-        Dipanggil oleh webclient via JSON-RPC.
-        Kita kembalikan JSON {logout: True, redirect_url: <SSO logout>}.
-        Webclient akan melakukan redirect ke URL tsb.
-        """
+    @http.route("/web/session/logout", type="http", auth="user", csrf=False)
+    def web_session_logout_http(self):
+        """Allow logging out via regular HTTP GET requests."""
         request.session.logout(keep_db=True)
-        payload = {
-            "logout": True,
-            "redirect_url": self._build_logout_redirect_uri(),
-        }
-        resp = request.make_json_response(payload)
+        resp = werkzeug_redirect(self._build_logout_redirect_uri())
         return self._clear_all_cookies(resp)
+
+    # @http.route("/web/session/logout", type="json", auth="user")
+    # def web_session_logout(self):
+    #     """
+    #     Dipanggil oleh webclient via JSON-RPC.
+    #     Kita kembalikan JSON {logout: True, redirect_url: <SSO logout>}.
+    #     Webclient akan melakukan redirect ke URL tsb.
+    #     """
+    #     request.session.logout(keep_db=True)
+    #     payload = {
+    #         "logout": True,
+    #         "redirect_url": self._build_logout_redirect_uri(),
+    #     }
+    #     resp = request.make_json_response(payload)
+    #     return self._clear_all_cookies(resp)

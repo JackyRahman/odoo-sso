@@ -30,5 +30,4 @@ class ResConfigSettings(models.TransientModel):
     @api.model
     def get_values(self):
         res = super().get_values()
-        # nothing special, let config_parameter handle persist
         return res
